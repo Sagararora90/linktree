@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 const JWT_SECRET = 'super-secret-key-for-vibe-page-development';
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1526027688685605086/exVvTqoXgDdRs0faCkJtKpUrrVDalIR5WCJn_yG4bzZ55JhyNvphKrj6tBaywAQwlx1e';
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
 // --- AUTHENTICATION ROUTES ---
 
@@ -167,7 +167,7 @@ app.get('/api/public/:username', async (req, res) => {
       else if (userAgent.includes('Macintosh')) device = '💻 Mac';
       else if (userAgent.includes('Windows')) device = '💻 Windows PC';
 
-      try {
+      if (DISCORD_WEBHOOK_URL) {
         fetch(DISCORD_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -188,7 +188,8 @@ app.get('/api/public/:username', async (req, res) => {
             }]
           })
         }).catch(() => {});
-      } catch (e) { }
+      }
+    } catch (e) { }
     })();
 
     const data = await UserData.findOne({ user_id: user._id });
