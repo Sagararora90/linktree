@@ -129,27 +129,67 @@ app.get('/api/public/:username', async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Send Analytics to Discord
-    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'Unknown';
+    const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'Unknown';
+    const ip = rawIp.split(',')[0].trim(); // x-forwarded-for can have multiple IPs
     const userAgent = req.headers['user-agent'] || 'Unknown';
     const referer = req.headers['referer'] || 'Direct Link';
-    try {
-      fetch(DISCORD_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          embeds: [{
-            title: `👀 New Visit to /${username}`,
-            color: 0xa78bfa,
-            fields: [
-              { name: 'Time', value: new Date().toLocaleString(), inline: true },
-              { name: 'IP Address', value: ip, inline: true },
-              { name: 'Source (Referer)', value: referer, inline: false },
-              { name: 'Device/Browser', value: userAgent, inline: false }
-            ]
-          }]
-        })
-      }).catch(() => {}); // silent fail
-    } catch (e) { /* silent fail */ }
+
+    // We do this asynchronously so it doesn't slow down the page load for the visitor!
+    (async () => {
+      let locationStr = 'Unknown Location';
+      let ispStr = 'Unknown ISP';
+      
+      // Get Location from IP
+      if (ip && ip !== 'Unknown' && ip !== '::1' && ip !== '127.0.0.1') {
+        try {
+          const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,isp`);
+          const geo = await geoRes.json();
+          if (geo.status === 'success') {
+            locationStr = `${geo.city}, ${geo.country}`;
+            ispStr = geo.isp;
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      // Format Source Beautifully
+      let source = referer;
+      if (referer.includes('instagram.com')) source = '📱 Instagram';
+      else if (referer.includes('tiktok.com')) source = '🎵 TikTok';
+      else if (referer.includes('t.co') || referer.includes('twitter.com')) source = '🐦 Twitter / X';
+      else if (referer.includes('youtube.com')) source = '📺 YouTube';
+      else if (referer === 'Direct Link') source = '🔗 Direct Link (Typed URL or Text Message)';
+
+      // Extract Device briefly from UserAgent
+      let device = 'Computer / Unknown';
+      if (userAgent.includes('iPhone')) device = '📱 iPhone';
+      else if (userAgent.includes('Android')) device = '📱 Android Phone';
+      else if (userAgent.includes('iPad')) device = '📱 iPad';
+      else if (userAgent.includes('Macintosh')) device = '💻 Mac';
+      else if (userAgent.includes('Windows')) device = '💻 Windows PC';
+
+      try {
+        fetch(DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            embeds: [{
+              title: `🚨 New Visitor on /${username}!`,
+              description: `Someone just viewed your Linktree page.`,
+              color: 0x00ffaa,
+              fields: [
+                { name: '📍 Location', value: locationStr, inline: true },
+                { name: '🌐 ISP / Network', value: ispStr, inline: true },
+                { name: '🔗 Where they came from', value: source, inline: false },
+                { name: '💻 Device', value: device, inline: true },
+                { name: '🔢 IP Address', value: ip, inline: true },
+                { name: '🔍 Raw Device Info', value: `\`${userAgent.substring(0, 100)}...\``, inline: false }
+              ],
+              footer: { text: `Visited at ${new Date().toLocaleString()}` }
+            }]
+          })
+        }).catch(() => {});
+      } catch (e) { }
+    })();
 
     const data = await UserData.findOne({ user_id: user._id });
     if (!data) return res.json({});
