@@ -17,7 +17,7 @@ import { Link as LinkIcon, Trash2, ExternalLink, GripVertical, Brush, Save, Imag
 import { ReactSketchCanvas } from 'react-sketch-canvas';
 import { IconInstagram, IconTwitter, IconTikTok, IconYouTube } from './SocialIcons';
 import { API_BASE_URL } from '../config';
-// Storage is now handled by the backend API.
+import { fileToCompressedDataURL } from './storage';
 import './Editor.css';
 import './EditorResponsive.css';
 import './ButtonStyles.css';
