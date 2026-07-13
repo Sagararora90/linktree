@@ -81,7 +81,8 @@ app.get('/api/user/data', verifyToken, async (req, res) => {
       customColors: data.customColors,
       links: data.links,
       bgImage: data.bgImage,
-      drawingBg: data.drawingBg
+      drawingBg: data.drawingBg,
+      profileLayout: data.profileLayout
     });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching data' });
@@ -203,7 +204,8 @@ app.get('/api/public/:username', async (req, res) => {
       customColors: data.customColors,
       links: data.links,
       bgImage: data.bgImage,
-      drawingBg: data.drawingBg
+      drawingBg: data.drawingBg,
+      profileLayout: data.profileLayout
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

@@ -149,7 +149,7 @@ export default function Editor() {
     if (!token) return;
 
     const payload = {
-      profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg
+      profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout
     };
 
     const timer = setTimeout(() => {
@@ -171,7 +171,7 @@ export default function Editor() {
     }, 1000); // 1-second debounce
 
     return () => clearTimeout(timer);
-  }, [profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, isLoaded]);
+  }, [profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout, isLoaded]);
 
   // Apply theme to document
   useEffect(() => {
@@ -286,7 +286,7 @@ export default function Editor() {
     setUploadError('');
     try {
       const dataUrl = await fileToCompressedDataURL(file, 500, 0.85);
-      setProfile(p => ({ ...p, avatar: dataUrl }));
+      setCropImage(dataUrl);
     } catch (err) {
       setUploadError(err.message || 'Could not load that image.');
     }
