@@ -153,7 +153,14 @@ export default function Editor() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
-      }).catch(err => setSaveError('Failed to save to cloud.'));
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) {
+          localStorage.setItem('username', data.username);
+        }
+      })
+      .catch(err => setSaveError('Failed to save to cloud.'));
     }, 1000); // 1-second debounce
 
     return () => clearTimeout(timer);

@@ -7,9 +7,10 @@ const { User, UserData } = require('./database');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const JWT_SECRET = 'super-secret-key-for-vibe-page-development';
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1526027688685605086/exVvTqoXgDdRs0faCkJtKpUrrVDalIR5WCJn_yG4bzZ55JhyNvphKrj6tBaywAQwlx1e';
 
 // --- AUTHENTICATION ROUTES ---
 
@@ -91,13 +92,30 @@ app.post('/api/user/data', verifyToken, async (req, res) => {
   try {
     const { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg } = req.body;
     
+    // Check if user wants to change their URL slug
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    let activeUsername = user.username;
+
+    if (profile && profile.username) {
+      const requestedSlug = profile.username.replace(/^@/, '').trim().toLowerCase();
+      if (requestedSlug && requestedSlug !== activeUsername) {
+        const existing = await User.findOne({ username: requestedSlug });
+        if (!existing) {
+          user.username = requestedSlug;
+          await user.save();
+          activeUsername = requestedSlug;
+        }
+      }
+    }
+
     await UserData.findOneAndUpdate(
       { user_id: req.userId },
       { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg },
       { upsert: true, new: true }
     );
 
-    res.json({ message: 'Data saved successfully' });
+    res.json({ message: 'Data saved successfully', username: activeUsername });
   } catch (err) {
     res.status(500).json({ message: 'Error saving data' });
   }
@@ -109,6 +127,29 @@ app.get('/api/public/:username', async (req, res) => {
     const { username } = req.params;
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Send Analytics to Discord
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'Unknown';
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const referer = req.headers['referer'] || 'Direct Link';
+    try {
+      fetch(DISCORD_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          embeds: [{
+            title: `👀 New Visit to /${username}`,
+            color: 0xa78bfa,
+            fields: [
+              { name: 'Time', value: new Date().toLocaleString(), inline: true },
+              { name: 'IP Address', value: ip, inline: true },
+              { name: 'Source (Referer)', value: referer, inline: false },
+              { name: 'Device/Browser', value: userAgent, inline: false }
+            ]
+          }]
+        })
+      }).catch(() => {}); // silent fail
+    } catch (e) { /* silent fail */ }
 
     const data = await UserData.findOne({ user_id: user._id });
     if (!data) return res.json({});
