@@ -100,6 +100,10 @@ export default function Editor() {
   const [saveError, setSaveError] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [cropImage, setCropImage] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   const canvasRef = useRef(null);
   const bgInputRef = useRef(null);
@@ -235,6 +239,43 @@ export default function Editor() {
       setBgImage(dataUrl);
     } catch (err) {
       setUploadError(err.message || 'Could not load that image.');
+    }
+  };
+
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const getCroppedImg = async () => {
+    try {
+      const image = new Image();
+      image.src = cropImage;
+      await new Promise((resolve) => (image.onload = resolve));
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const size = Math.max(image.width, image.height);
+      canvas.width = size;
+      canvas.height = size;
+
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        size,
+        size
+      );
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      setProfile((p) => ({ ...p, avatar: dataUrl }));
+      setCropImage(null);
+    } catch (e) {
+      console.error(e);
+      setUploadError('Failed to crop image.');
     }
   };
 
