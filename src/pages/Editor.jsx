@@ -16,7 +16,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { Link as LinkIcon, Trash2, ExternalLink, GripVertical, Brush, Save, Image as ImageIcon, Copy } from 'lucide-react';
 import { ReactSketchCanvas } from 'react-sketch-canvas';
 import { IconInstagram, IconTwitter, IconTikTok, IconYouTube } from './SocialIcons';
-import { loadJSON, loadString, saveValue, fileToCompressedDataURL, normalizeUrl } from './storage';
+import { API_BASE_URL } from '../config';
+// Storage is now handled by the backend API.
 import './Editor.css';
 import './ButtonStyles.css';
 
@@ -74,46 +75,94 @@ function SortableLinkItem({ item, isSelected, onSelect }) {
 
 export default function Editor() {
   // ── STATE ──
-  const [links, setLinks] = useState(() => loadJSON('links', DEFAULT_LINKS));
-  const [profile, setProfile] = useState(() => loadJSON('profile', DEFAULT_PROFILE));
-  const [socials, setSocials] = useState(() => loadJSON('socials', DEFAULT_SOCIALS));
-  const [bgImage, setBgImage] = useState(() => loadString('bg', ''));
-  const [theme, setTheme] = useState(() => loadString('theme', 'default'));
-  const [btnStyle, setBtnStyle] = useState(() => loadString('btn_style', 'style-solid'));
-  const [btnShape, setBtnShape] = useState(() => loadString('btn_shape', 'shape-rounded'));
-  const [customColors, setCustomColors] = useState(() => loadJSON('custom_colors', {
+  const [links, setLinks] = useState(DEFAULT_LINKS);
+  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [socials, setSocials] = useState(DEFAULT_SOCIALS);
+  const [bgImage, setBgImage] = useState('');
+  const [theme, setTheme] = useState('default');
+  const [btnStyle, setBtnStyle] = useState('style-solid');
+  const [btnShape, setBtnShape] = useState('shape-rounded');
+  const [customColors, setCustomColors] = useState({
     bgPrimary: '#1a1a1a',
     bgSecondary: '#222222',
     bgElevated: '#333333',
     textPrimary: '#ffffff',
     textSecondary: '#aaaaaa',
     accent: '#3b82f6'
-  }));
+  });
   const [isDrawing, setIsDrawing] = useState(false);
-  const [drawingBg, setDrawingBg] = useState(() => loadString('drawing', ''));
+  const [drawingBg, setDrawingBg] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [activeTab, setActiveTab] = useState('links');
   const [saveError, setSaveError] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const canvasRef = useRef(null);
   const bgInputRef = useRef(null);
   const avatarInputRef = useRef(null);
 
-  // ── PERSISTENCE (each write is guarded, so a quota error can't crash the app) ──
-  useEffect(() => { if (!saveValue('links', links)) setSaveError('Could not save links — storage may be full.'); }, [links]);
-  useEffect(() => { if (!saveValue('profile', profile)) setSaveError('Could not save profile — storage may be full.'); }, [profile]);
-  useEffect(() => { if (!saveValue('socials', socials)) setSaveError('Could not save socials — storage may be full.'); }, [socials]);
+  // ── LOAD DATA ON MOUNT ──
   useEffect(() => {
-    saveValue('theme', theme);
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      setIsLoaded(true); // Let them play around locally if no auth
+      return;
+    }
+
+    fetch(`${API_BASE_URL}/api/user/data`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data && Object.keys(data).length > 0) {
+          if (data.links && data.links.length > 0) setLinks(data.links);
+          if (data.profile) setProfile(data.profile);
+          if (data.socials) setSocials(data.socials);
+          if (data.theme) setTheme(data.theme);
+          if (data.btnStyle) setBtnStyle(data.btnStyle);
+          if (data.btnShape) setBtnShape(data.btnShape);
+          if (data.customColors) setCustomColors(data.customColors);
+          if (data.bgImage) setBgImage(data.bgImage);
+          if (data.drawingBg) setDrawingBg(data.drawingBg);
+        }
+        setIsLoaded(true);
+      })
+      .catch(err => {
+        console.error('Failed to load data:', err);
+        setIsLoaded(true);
+      });
+  }, []);
+
+  // ── AUTO-SAVE TO BACKEND ──
+  useEffect(() => {
+    if (!isLoaded) return;
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    const payload = {
+      profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg
+    };
+
+    const timer = setTimeout(() => {
+      fetch(`${API_BASE_URL}/api/user/data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      }).catch(err => setSaveError('Failed to save to cloud.'));
+    }, 1000); // 1-second debounce
+
+    return () => clearTimeout(timer);
+  }, [profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, isLoaded]);
+
+  // Apply theme to document
+  useEffect(() => {
     if (theme === 'default') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
-  useEffect(() => { saveValue('btn_style', btnStyle); }, [btnStyle]);
-  useEffect(() => { saveValue('btn_shape', btnShape); }, [btnShape]);
-  useEffect(() => { saveValue('custom_colors', customColors); }, [customColors]);
-  useEffect(() => { if (!saveValue('bg', bgImage)) setSaveError('Could not save background — storage may be full.'); }, [bgImage]);
-  useEffect(() => { if (!saveValue('drawing', drawingBg)) setSaveError('Could not save drawing — storage may be full.'); }, [drawingBg]);
 
   // ── DND (Sortable for link reordering) ──
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -420,8 +469,20 @@ export default function Editor() {
         )}
 
         <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
-          <button className="action-btn primary" onClick={() => window.open('/preview', '_blank')}>
+          <button className="action-btn primary" onClick={() => {
+            const username = localStorage.getItem('username');
+            window.open(`/${username}`, '_blank');
+          }}>
             <ExternalLink size={16} /> View Public Page
+          </button>
+          <button className="action-btn primary" style={{ marginTop: '12px' }} onClick={() => {
+            const username = localStorage.getItem('username');
+            const url = `${window.location.origin}/${username}`;
+            navigator.clipboard.writeText(url).then(() => {
+              alert('Link copied to clipboard! Give this URL to others.');
+            });
+          }}>
+            <Copy size={16} /> Copy Share Link
           </button>
         </div>
       </div>

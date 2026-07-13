@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isFirebaseConfigured, auth } from '../firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { API_BASE_URL } from '../config';
 import './Auth.css';
 
 export default function Auth() {
@@ -15,25 +14,30 @@ export default function Auth() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    // If Firebase isn't configured, bypass auth and just log them in locally
-    if (!isFirebaseConfigured) {
-      console.warn("Firebase not configured. Bypassing auth for local development.");
-      localStorage.setItem('local_auth_bypass', 'true');
-      navigate('/dashboard');
-      return;
-    }
-
     setLoading(true);
+
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Authentication failed');
       }
+
+      // Save the JWT token and jump to dashboard
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('username', data.username);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message.replace('Firebase: ', ''));
+      setError(err.message);
     }
     setLoading(false);
   };
@@ -46,13 +50,6 @@ export default function Auth() {
         <p className="auth-subtitle">
           {isLogin ? 'Welcome back. Let\'s get aesthetic.' : 'Claim your space on the internet.'}
         </p>
-
-        {!isFirebaseConfigured && (
-          <div className="auth-alert">
-            <strong>Dev Mode Active</strong>
-            <p>Firebase is not connected. You can click submit to bypass login and test locally.</p>
-          </div>
-        )}
 
         {error && <div className="auth-error">{error}</div>}
 

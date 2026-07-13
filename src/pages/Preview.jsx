@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { IconInstagram, IconTwitter, IconTikTok, IconYouTube } from './SocialIcons';
-import { loadJSON, loadString } from './storage';
+import { API_BASE_URL } from '../config';
 import './Preview.css';
 import './ButtonStyles.css';
 
@@ -21,26 +22,57 @@ export default function Preview() {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [socials, setSocials] = useState(DEFAULT_SOCIALS);
 
-  useEffect(() => {
-    setLinks(loadJSON('links', []));
-    setProfile(loadJSON('profile', DEFAULT_PROFILE));
-    setSocials(loadJSON('socials', DEFAULT_SOCIALS));
-    setBgImage(loadString('bg', ''));
-    setDrawingBg(loadString('drawing', ''));
-    setBtnStyle(loadString('btn_style', 'style-solid'));
-    setBtnShape(loadString('btn_shape', 'shape-rounded'));
-    setCustomColors(loadJSON('custom_colors', {
-      bgPrimary: '#1a1a1a', bgSecondary: '#222222', bgElevated: '#333333',
-      textPrimary: '#ffffff', textSecondary: '#aaaaaa', accent: '#3b82f6'
-    }));
+  const { username } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-    const savedTheme = loadString('theme', 'default');
-    setTheme(savedTheme);
-    if (savedTheme && savedTheme !== 'default') {
-      document.documentElement.setAttribute('data-theme', savedTheme);
+  useEffect(() => {
+    // If we're on the local dev "preview" route and have an auth token, grab the owner's data
+    let fetchUrl = `${API_BASE_URL}/api/public/${username}`;
+    let headers = {};
+
+    if (!username || username === 'preview') {
+      const localUser = localStorage.getItem('username');
+      if (localUser) {
+        fetchUrl = `${API_BASE_URL}/api/public/${localUser}`;
+      } else {
+        // Not logged in, viewing local blank preview
+        setLoading(false);
+        return;
+      }
     }
+
+    fetch(fetchUrl, headers)
+      .then(res => {
+        if (!res.ok) throw new Error('User not found');
+        return res.json();
+      })
+      .then(data => {
+        if (Object.keys(data).length === 0) {
+           setLoading(false);
+           return;
+        }
+        if (data.links) setLinks(data.links);
+        if (data.profile) setProfile(data.profile);
+        if (data.socials) setSocials(data.socials);
+        if (data.theme) {
+          setTheme(data.theme);
+          if (data.theme !== 'default') document.documentElement.setAttribute('data-theme', data.theme);
+        }
+        if (data.btnStyle) setBtnStyle(data.btnStyle);
+        if (data.btnShape) setBtnShape(data.btnShape);
+        if (data.customColors) setCustomColors(data.customColors);
+        if (data.bgImage) setBgImage(data.bgImage);
+        if (data.drawingBg) setDrawingBg(data.drawingBg);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(true);
+        setLoading(false);
+      });
+
     return () => document.documentElement.removeAttribute('data-theme');
-  }, []);
+  }, [username]);
 
   const visibleLinks = links.filter(link => link.content?.trim() || link.url?.trim());
 
