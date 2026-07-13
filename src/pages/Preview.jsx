@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { IconInstagram, IconTwitter, IconTikTok, IconYouTube } from './SocialIcons';
+import { MoreHorizontal, Share2, User } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import './Preview.css';
 import './ButtonStyles.css';
@@ -102,9 +103,31 @@ export default function Preview() {
       {drawingBg && <div className="preview-bg" style={{ backgroundImage: `url(${drawingBg})`, backgroundSize: '100% 100%', opacity: 1 }} />}
 
       <div className="preview-content">
+        {/* Top Right Share Button */}
+        <button 
+          className="preview-top-share" 
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title: profile.name || 'Linktree', url: window.location.href });
+            } else {
+              navigator.clipboard.writeText(window.location.href);
+              alert('Profile link copied!');
+            }
+          }}
+          aria-label="Share Profile"
+        >
+          <Share2 size={18} />
+        </button>
+
         {/* Profile */}
         <div className="preview-profile">
-          {profile.avatar && <img src={profile.avatar} alt="" className="preview-avatar" />}
+          {profile.avatar ? (
+            <img src={profile.avatar} alt="" className="preview-avatar" />
+          ) : (
+            <div className="preview-avatar-placeholder">
+              <User size={40} color="var(--text-secondary)" />
+            </div>
+          )}
           {profile.name && <h1 className="preview-name">{profile.name}</h1>}
           {profile.username && <p className="preview-username">{profile.username}</p>}
           {profile.bio && <p className="preview-bio">{profile.bio}</p>}
@@ -134,11 +157,27 @@ export default function Preview() {
                 className={`preview-link-card ${btnStyle} ${btnShape} ${gSize} ${cStyle}`}
                 style={{
                   fontFamily: link.font || "'Inter', sans-serif",
-                  color: link.color || 'var(--text-primary)',
-                  backgroundColor: link.bgColor || 'var(--bg-elevated)',
+                  color: link.color || undefined,
+                  backgroundColor: link.bgColor || undefined,
                 }}
               >
-                {link.content}
+                <span>{link.content}</span>
+                <button 
+                  className="link-share-btn" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (navigator.share) {
+                      navigator.share({ title: link.content, url: link.url });
+                    } else {
+                      navigator.clipboard.writeText(link.url);
+                      alert('Link copied!');
+                    }
+                  }}
+                  aria-label="Share Link"
+                >
+                  <MoreHorizontal size={20} />
+                </button>
               </a>
             );
           })}
@@ -146,6 +185,11 @@ export default function Preview() {
         ) : (
           <p className="preview-empty">No links yet.</p>
         )}
+        
+        {/* Branding Footer */}
+        <div className="preview-footer">
+          <p>Powered by <strong>Linktree V6</strong></p>
+        </div>
       </div>
     </div>
   );

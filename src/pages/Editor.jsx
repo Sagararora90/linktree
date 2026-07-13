@@ -13,8 +13,9 @@ import {
 } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Link as LinkIcon, Trash2, ExternalLink, GripVertical, Brush, Save, Image as ImageIcon, Copy } from 'lucide-react';
+import { Link as LinkIcon, Trash2, ExternalLink, GripVertical, Brush, Save, Image as ImageIcon, Copy, User, Check, Loader2 } from 'lucide-react';
 import { ReactSketchCanvas } from 'react-sketch-canvas';
+import Cropper from 'react-easy-crop';
 import { IconInstagram, IconTwitter, IconTikTok, IconYouTube } from './SocialIcons';
 import { API_BASE_URL } from '../config';
 import { fileToCompressedDataURL } from './storage';
@@ -337,7 +338,7 @@ export default function Editor() {
               <div className="avatar-row">
                 {profile.avatar
                   ? <img src={profile.avatar} alt="" className="avatar-preview" />
-                  : <div className="avatar-placeholder" />}
+                  : <div className="avatar-placeholder"><User size={24} color="var(--text-secondary)" /></div>}
                 <button className="avatar-btn" onClick={() => avatarInputRef.current.click()}>Upload</button>
                 {profile.avatar && <button className="avatar-btn" onClick={() => setProfile(p => ({ ...p, avatar: '' }))}>Remove</button>}
               </div>
@@ -550,8 +551,8 @@ export default function Editor() {
                       className={`mockup-link-card ${selectedId === link.id ? 'selected' : ''} ${btnStyle} ${btnShape} ${gSize} ${cStyle}`}
                       style={{
                         fontFamily: link.font || "'Inter', sans-serif",
-                        color: link.color || 'var(--text-primary)',
-                        backgroundColor: link.bgColor || 'var(--bg-elevated)',
+                        color: link.color || undefined,
+                        backgroundColor: link.bgColor || undefined,
                       }}
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedId(link.id); }}
                     >
@@ -596,21 +597,17 @@ export default function Editor() {
             </div>
             <div className="input-group">
               <label>Text Color</label>
-              <input type="color" value={selectedLink.color || '#f5f5f5'} onChange={(e) => updateLink('color', e.target.value)} />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="color" value={selectedLink.color || '#ffffff'} onChange={(e) => updateLink('color', e.target.value)} />
+                <button className="avatar-btn" style={{ padding: '0 8px' }} onClick={() => updateLink('color', '')}>Default</button>
+              </div>
             </div>
             <div className="input-group">
-              <label>Background</label>
-              <select value={selectedLink.bgColor || ''} onChange={(e) => updateLink('bgColor', e.target.value)}>
-                <option value="">Theme Default</option>
-                <option value="transparent">Transparent</option>
-                <option value="#ffffff">White</option>
-                <option value="#000000">Black</option>
-                <option value="#a78bfa">Purple</option>
-                <option value="#f472b6">Pink</option>
-                <option value="#38bdf8">Blue</option>
-                <option value="#4ade80">Green</option>
-                <option value="#fbbf24">Gold</option>
-              </select>
+              <label>Background Color</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="color" value={selectedLink.bgColor || '#000000'} onChange={(e) => updateLink('bgColor', e.target.value)} />
+                <button className="avatar-btn" style={{ padding: '0 8px' }} onClick={() => updateLink('bgColor', '')}>Default</button>
+              </div>
             </div>
             
             <div className="sidebar-header" style={{ marginTop: '20px' }}><h2>Scrapbook & Layout</h2></div>
