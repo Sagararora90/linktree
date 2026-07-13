@@ -189,7 +189,6 @@ app.get('/api/public/:username', async (req, res) => {
           })
         }).catch(() => {});
       }
-    } catch (e) { }
     })();
 
     const data = await UserData.findOne({ user_id: user._id });
