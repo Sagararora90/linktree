@@ -134,7 +134,7 @@ app.get('/api/ping', (req, res) => res.json({ status: 'alive' }));
 
 // --- SERVE FRONTEND (For Render Deployment) ---
 app.use(express.static(path.join(__dirname, '../dist')));
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
