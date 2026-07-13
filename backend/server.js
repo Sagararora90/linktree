@@ -90,7 +90,7 @@ app.get('/api/user/data', verifyToken, async (req, res) => {
 
 app.post('/api/user/data', verifyToken, async (req, res) => {
   try {
-    const { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg } = req.body;
+    const { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout } = req.body;
     
     // Check if user wants to change their URL slug
     const user = await User.findById(req.userId);
@@ -111,7 +111,7 @@ app.post('/api/user/data', verifyToken, async (req, res) => {
 
     await UserData.findOneAndUpdate(
       { user_id: req.userId },
-      { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg },
+      { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout },
       { upsert: true, new: true }
     );
 

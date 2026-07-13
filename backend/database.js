@@ -18,6 +18,7 @@ const userDataSchema = new mongoose.Schema({
   profile: { type: Object, default: {} },
   socials: { type: Object, default: {} },
   theme: { type: String, default: 'default' },
+  profileLayout: { type: String, default: 'layout-classic' },
   btnStyle: { type: String, default: 'style-solid' },
   btnShape: { type: String, default: 'shape-rounded' },
   customColors: { type: Object, default: {} },

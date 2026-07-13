@@ -84,6 +84,7 @@ export default function Editor() {
   const [theme, setTheme] = useState('default');
   const [btnStyle, setBtnStyle] = useState('style-solid');
   const [btnShape, setBtnShape] = useState('shape-rounded');
+  const [profileLayout, setProfileLayout] = useState('layout-classic');
   const [customColors, setCustomColors] = useState({
     bgPrimary: '#1a1a1a',
     bgSecondary: '#222222',
@@ -124,6 +125,7 @@ export default function Editor() {
           if (data.theme) setTheme(data.theme);
           if (data.btnStyle) setBtnStyle(data.btnStyle);
           if (data.btnShape) setBtnShape(data.btnShape);
+        if (data.profileLayout) setProfileLayout(data.profileLayout);
           if (data.customColors) setCustomColors(data.customColors);
           if (data.bgImage) setBgImage(data.bgImage);
           if (data.drawingBg) setDrawingBg(data.drawingBg);
@@ -288,6 +290,47 @@ export default function Editor() {
           <button className={`tab-btn ${activeTab === 'links' ? 'active' : ''}`} onClick={() => setActiveTab('links')}>Links</button>
           <button className={`tab-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Profile</button>
           <button className={`tab-btn ${activeTab === 'style' ? 'active' : ''}`} onClick={() => setActiveTab('style')}>Style</button>
+          <button className={`tab-btn ${activeTab === 'layout' ? 'active' : ''}`} onClick={() => setActiveTab('layout')}>Layout</button>
+        </div>
+
+        {(saveError || uploadError) && (
+          <div className="banner-error" role="alert">
+            {uploadError || saveError}
+            <button
+              className="banner-dismiss"
+              onClick={() => { setSaveError(''); setUploadError(''); }}
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* LINKS TAB */}
+        {activeTab === 'links' && (
+          <>
+            <button className="add-btn" onClick={addLink} style={{ marginBottom: '16px' }}>
+              <LinkIcon size={16} /> Add New Link
+            </button>
+
+            <div className="sidebar-header"><h2>Your Links</h2></div>
+            <div className="links-list">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={links.map(l => l.id)} strategy={verticalListSortingStrategy}>
+                  {links.map(link => (
+                    <SortableLinkItem
+                      key={link.id}
+                      item={link}
+                      isSelected={selectedId === link.id}
+                      onSelect={(id) => setSelectedId(id)}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </div>
+            {links.length === 0 && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textAlign: 'center', marginTop: '20px' }}>No links yet. Click "Add New Link" to start!</p>}
+          </>
+          <button className={`tab-btn ${activeTab === 'layout' ? 'active' : ''}`} onClick={() => setActiveTab('layout')}>Layout</button>
         </div>
 
         {(saveError || uploadError) && (
@@ -334,7 +377,7 @@ export default function Editor() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div className="input-group">
               <label>Avatar</label>
-              <input type="file" accept="image/*" ref={avatarInputRef} style={{ display: 'none' }} onChange={handleAvatarUpload} />
+              <input type="file" accept="image/jpeg, image/png, image/webp" ref={avatarInputRef} style={{ display: 'none' }} onChange={handleAvatarUpload} />
               <div className="avatar-row">
                 {profile.avatar
                   ? <img src={profile.avatar} alt="" className="avatar-preview" />
@@ -377,6 +420,73 @@ export default function Editor() {
         )}
 
         {/* STYLE TAB */}
+                {activeTab === 'layout' && (
+          <div className="tab-pane">
+            <h2>Profile Layouts</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Choose how your profile is structured.</p>
+
+            <div className="shape-selector" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+              
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-classic' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-classic')}
+              >
+                Classic Center
+              </button>
+
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-minimal' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-minimal')}
+              >
+                Minimal (No Avatar)
+              </button>
+
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-left' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-left')}
+              >
+                Left Aligned
+              </button>
+
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-right' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-right')}
+              >
+                Right Aligned
+              </button>
+
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-bottom' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-bottom')}
+              >
+                Bottom Gravity
+              </button>
+
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-top-heavy' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-top-heavy')}
+              >
+                Avatar Only (No Bio)
+              </button>
+
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-card' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-card')}
+              >
+                Elevated Card
+              </button>
+
+              <button 
+                className={`shape-btn ${profileLayout === 'layout-hero' ? 'active' : ''}`}
+                onClick={() => setProfileLayout('layout-hero')}
+              >
+                Hero Banner
+              </button>
+
+            </div>
+          </div>
+        )}
+
         {activeTab === 'style' && (
           <>
             <div className="sidebar-header"><h2>Theme</h2></div>
@@ -519,15 +629,15 @@ export default function Editor() {
             )}
 
             {/* Page Content */}
-            <div className="mockup-scroll">
+            <div className={`mockup-scroll ${profileLayout}`}>
               {/* Profile */}
               <div className="mockup-profile">
-                {profile.avatar && <img src={profile.avatar} alt="" className="mockup-avatar" />}
-                <h2 className="mockup-name">{profile.name}</h2>
-                <p className="mockup-username">{profile.username}</p>
-                <p className="mockup-bio">{profile.bio}</p>
+                {profileLayout !== 'layout-minimal' && profile.avatar && <img src={profile.avatar} alt="" className="mockup-avatar" />}
+                {profileLayout !== 'layout-top-heavy' && <h2 className="mockup-name">{profile.name}</h2>}
+                {profileLayout !== 'layout-top-heavy' && <p className="mockup-username">{profile.username}</p>}
+                {profileLayout !== 'layout-top-heavy' && <p className="mockup-bio">{profile.bio}</p>}
 
-                {(socials.instagram || socials.twitter || socials.tiktok || socials.youtube) && (
+                {profileLayout !== 'layout-top-heavy' && (socials.instagram || socials.twitter || socials.tiktok || socials.youtube) && (
                   <div className="mockup-socials">
                     {socials.instagram && <a href={socials.instagram} target="_blank" rel="noreferrer"><IconInstagram size={18} /></a>}
                     {socials.twitter && <a href={socials.twitter} target="_blank" rel="noreferrer"><IconTwitter size={18} /></a>}
@@ -643,6 +753,43 @@ export default function Editor() {
           </div>
         )}
       </div>
+
+      {cropImage && (
+        <div className="drawing-modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="drawing-modal" style={{ width: '400px', height: '500px', display: 'flex', flexDirection: 'column' }}>
+            <div className="drawing-header">
+              <h3>Crop Avatar</h3>
+              <button className="close-btn" onClick={() => setCropImage(null)}>×</button>
+            </div>
+            <div style={{ position: 'relative', flex: 1, background: '#000' }}>
+              <Cropper
+                image={cropImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
+            </div>
+            <div style={{ padding: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <input 
+                type="range" 
+                value={zoom} 
+                min={1} 
+                max={3} 
+                step={0.1} 
+                aria-labelledby="Zoom" 
+                onChange={(e) => setZoom(e.target.value)} 
+                style={{ flex: 1 }} 
+              />
+              <button className="add-btn" onClick={getCroppedImg} style={{ padding: '8px 16px', width: 'auto', marginBottom: 0 }}>Crop & Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

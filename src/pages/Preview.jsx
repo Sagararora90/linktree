@@ -15,6 +15,7 @@ export default function Preview() {
   const [bgImage, setBgImage] = useState('');
   const [btnStyle, setBtnStyle] = useState('style-solid');
   const [btnShape, setBtnShape] = useState('shape-rounded');
+  const [profileLayout, setProfileLayout] = useState('layout-classic');
   const [theme, setTheme] = useState('default');
   const [customColors, setCustomColors] = useState({
     bgPrimary: '#1a1a1a', bgSecondary: '#222222', bgElevated: '#333333',
@@ -62,6 +63,7 @@ export default function Preview() {
         }
         if (data.btnStyle) setBtnStyle(data.btnStyle);
         if (data.btnShape) setBtnShape(data.btnShape);
+        if (data.profileLayout) setProfileLayout(data.profileLayout);
         if (data.customColors) setCustomColors(data.customColors);
         if (data.bgImage) setBgImage(data.bgImage);
         if (data.drawingBg) setDrawingBg(data.drawingBg);
@@ -102,7 +104,7 @@ export default function Preview() {
       {/* Drawing Layer */}
       {drawingBg && <div className="preview-bg" style={{ backgroundImage: `url(${drawingBg})`, backgroundSize: '100% 100%', opacity: 1 }} />}
 
-      <div className="preview-content">
+      <div className={`preview-content ${profileLayout}`}>
         {/* Top Right Share Button */}
         <button 
           className="preview-top-share" 
@@ -121,18 +123,20 @@ export default function Preview() {
 
         {/* Profile */}
         <div className="preview-profile">
-          {profile.avatar ? (
-            <img src={profile.avatar} alt="" className="preview-avatar" />
-          ) : (
-            <div className="preview-avatar-placeholder">
-              <User size={40} color="var(--text-secondary)" />
-            </div>
+          {profileLayout !== 'layout-minimal' && (
+            profile.avatar ? (
+              <img src={profile.avatar} alt="" className="preview-avatar" />
+            ) : (
+              <div className="preview-avatar-placeholder">
+                <User size={40} color="var(--text-secondary)" />
+              </div>
+            )
           )}
-          {profile.name && <h1 className="preview-name">{profile.name}</h1>}
-          {profile.username && <p className="preview-username">{profile.username}</p>}
-          {profile.bio && <p className="preview-bio">{profile.bio}</p>}
+          {profile.name && profileLayout !== 'layout-top-heavy' && <h1 className="preview-name">{profile.name}</h1>}
+          {profile.username && profileLayout !== 'layout-top-heavy' && <p className="preview-username">{profile.username}</p>}
+          {profile.bio && profileLayout !== 'layout-top-heavy' && <p className="preview-bio">{profile.bio}</p>}
 
-          {(socials.instagram || socials.twitter || socials.tiktok || socials.youtube) && (
+          {(socials.instagram || socials.twitter || socials.tiktok || socials.youtube) && profileLayout !== 'layout-top-heavy' && (
             <div className="preview-socials">
               {socials.instagram && <a href={socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram"><IconInstagram size={22} /></a>}
               {socials.twitter && <a href={socials.twitter} target="_blank" rel="noreferrer" aria-label="Twitter / X"><IconTwitter size={22} /></a>}
