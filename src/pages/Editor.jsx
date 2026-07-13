@@ -19,6 +19,7 @@ import { IconInstagram, IconTwitter, IconTikTok, IconYouTube } from './SocialIco
 import { API_BASE_URL } from '../config';
 // Storage is now handled by the backend API.
 import './Editor.css';
+import './EditorResponsive.css';
 import './ButtonStyles.css';
 
 // ── THEMES ──
