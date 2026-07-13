@@ -231,7 +231,7 @@ export default function Editor() {
       const dataUrl = await fileToCompressedDataURL(file, 1400, 0.8);
       setBgImage(dataUrl);
     } catch (err) {
-      setUploadError('Could not load that image. Try a different file.');
+      setUploadError(err.message || 'Could not load that image.');
     }
   };
 
@@ -244,7 +244,7 @@ export default function Editor() {
       const dataUrl = await fileToCompressedDataURL(file, 500, 0.85);
       setProfile(p => ({ ...p, avatar: dataUrl }));
     } catch (err) {
-      setUploadError('Could not load that image. Try a different file.');
+      setUploadError(err.message || 'Could not load that image.');
     }
   };
 

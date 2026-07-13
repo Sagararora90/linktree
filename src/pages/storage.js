@@ -53,15 +53,23 @@ export function removeValue(key) {
  */
 export function fileToCompressedDataURL(file, maxDimension = 1000, quality = 0.82) {
   return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith('image/')) {
-      reject(new Error('Not an image file'));
+    if (!file) {
+      reject(new Error('No file selected'));
+      return;
+    }
+    if (file.type === 'image/heic' || file.name?.toLowerCase().endsWith('.heic')) {
+      reject(new Error('HEIC (iPhone) photos are not supported by web browsers. Please convert to JPG/PNG first.'));
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('File must be an image (JPG, PNG, GIF)'));
       return;
     }
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.onerror = () => reject(new Error('Browser could not read file'));
     reader.onload = (ev) => {
       const img = new Image();
-      img.onerror = () => reject(new Error('Could not decode image'));
+      img.onerror = () => reject(new Error('Browser could not decode this image format'));
       img.onload = () => {
         let { width, height } = img;
         if (width > maxDimension || height > maxDimension) {
