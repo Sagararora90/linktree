@@ -330,46 +330,6 @@ export default function Editor() {
             </div>
             {links.length === 0 && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textAlign: 'center', marginTop: '20px' }}>No links yet. Click "Add New Link" to start!</p>}
           </>
-          <button className={`tab-btn ${activeTab === 'layout' ? 'active' : ''}`} onClick={() => setActiveTab('layout')}>Layout</button>
-        </div>
-
-        {(saveError || uploadError) && (
-          <div className="banner-error" role="alert">
-            {uploadError || saveError}
-            <button
-              className="banner-dismiss"
-              onClick={() => { setSaveError(''); setUploadError(''); }}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* LINKS TAB */}
-        {activeTab === 'links' && (
-          <>
-            <button className="add-btn" onClick={addLink} style={{ marginBottom: '16px' }}>
-              <LinkIcon size={16} /> Add New Link
-            </button>
-
-            <div className="sidebar-header"><h2>Your Links</h2></div>
-            <div className="links-list">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={links.map(l => l.id)} strategy={verticalListSortingStrategy}>
-                  {links.map(link => (
-                    <SortableLinkItem
-                      key={link.id}
-                      item={link}
-                      isSelected={selectedId === link.id}
-                      onSelect={(id) => setSelectedId(id)}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
-            </div>
-            {links.length === 0 && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textAlign: 'center', marginTop: '20px' }}>No links yet. Click "Add New Link" to start!</p>}
-          </>
         )}
 
         {/* PROFILE TAB */}
