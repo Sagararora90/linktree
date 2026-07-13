@@ -23,9 +23,6 @@
   z-index: 0;
   animation: breathe 15s ease-in-out infinite alternate;
 }
-  z-index: 0;
-  animation: breathe 10s ease-in-out infinite alternate;
-}
 
 @keyframes breathe {
   0% { transform: scale(1); }
