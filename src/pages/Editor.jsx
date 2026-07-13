@@ -22,6 +22,7 @@ import { fileToCompressedDataURL } from './storage';
 import './Editor.css';
 import './EditorResponsive.css';
 import './ButtonStyles.css';
+import QRModal from './QRModal';
 
 // ── THEMES ──
 const THEMES = [
@@ -30,13 +31,19 @@ const THEMES = [
   { id: 'midnight-bento', label: '🛹 Midnight Bento' },
   { id: 'vintage-scrapbook', label: '☕ Vintage Scrapbook' },
   { id: 'dark-academia', label: '🌿 Academia' },
+  { id: 'ocean-depths', label: '🌊 Ocean Depths' },
+  { id: 'sunset-haze', label: '🌅 Sunset Haze' },
+  { id: 'holographic', label: '💿 Holographic' },
+  { id: 'void', label: '⚫ The Void' },
+  { id: 'lavender-haze', label: '💜 Lavender Haze' },
+  { id: 'tokyo-neon', label: '🗼 Tokyo Neon' },
   { id: 'custom', label: '🎨 Custom' },
 ];
 
 const DEFAULT_LINKS = [
-  { id: '1', content: 'My Portfolio', url: 'https://example.com', font: "'Inter', sans-serif", color: '', bgColor: '' },
-  { id: '2', content: 'GitHub', url: 'https://github.com', font: "'Inter', sans-serif", color: '', bgColor: '' },
-  { id: '3', content: 'My Blog', url: 'https://blog.example.com', font: "'Inter', sans-serif", color: '', bgColor: '' },
+  { id: '1', content: 'My Portfolio', url: 'https://example.com', font: "'Inter', sans-serif", color: '', bgColor: '', icon: '' },
+  { id: '2', content: 'GitHub', url: 'https://github.com', font: "'Inter', sans-serif", color: '', bgColor: '', icon: '' },
+  { id: '3', content: 'My Blog', url: 'https://blog.example.com', font: "'Inter', sans-serif", color: '', bgColor: '', icon: '' },
 ];
 const DEFAULT_PROFILE = { name: 'Your Name', username: '@handle', bio: 'Welcome to my page ✨', avatar: '' };
 const DEFAULT_SOCIALS = { instagram: '', twitter: '', tiktok: '', youtube: '' };
@@ -104,6 +111,10 @@ export default function Editor() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [animatedBg, setAnimatedBg] = useState('none');
+  const [entranceAnim, setEntranceAnim] = useState('fade-up');
+  const [profileFont, setProfileFont] = useState("'Inter', sans-serif");
+  const [showQRModal, setShowQRModal] = useState(false);
 
   const canvasRef = useRef(null);
   const bgInputRef = useRef(null);
@@ -129,10 +140,13 @@ export default function Editor() {
           if (data.theme) setTheme(data.theme);
           if (data.btnStyle) setBtnStyle(data.btnStyle);
           if (data.btnShape) setBtnShape(data.btnShape);
-        if (data.profileLayout) setProfileLayout(data.profileLayout);
+          if (data.profileLayout) setProfileLayout(data.profileLayout);
           if (data.customColors) setCustomColors(data.customColors);
           if (data.bgImage) setBgImage(data.bgImage);
           if (data.drawingBg) setDrawingBg(data.drawingBg);
+          if (data.animatedBg) setAnimatedBg(data.animatedBg);
+          if (data.entranceAnim) setEntranceAnim(data.entranceAnim);
+          if (data.profileFont) setProfileFont(data.profileFont);
         }
         setIsLoaded(true);
       })
@@ -149,7 +163,7 @@ export default function Editor() {
     if (!token) return;
 
     const payload = {
-      profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout
+      profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout, animatedBg, entranceAnim, profileFont
     };
 
     const timer = setTimeout(() => {
@@ -171,7 +185,7 @@ export default function Editor() {
     }, 1000); // 1-second debounce
 
     return () => clearTimeout(timer);
-  }, [profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout, isLoaded]);
+  }, [profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout, animatedBg, entranceAnim, profileFont, isLoaded]);
 
   // Apply theme to document
   useEffect(() => {
@@ -196,7 +210,7 @@ export default function Editor() {
   // ── ACTIONS ──
   const addLink = () => {
     const newId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
-    const newLink = { id: newId, content: 'New Link', url: 'https://', font: "'Inter', sans-serif", color: '', bgColor: '', gridSize: 'bento-2x1', cardStyle: 'default' };
+    const newLink = { id: newId, content: 'New Link', url: 'https://', font: "'Inter', sans-serif", color: '', bgColor: '', gridSize: 'bento-2x1', cardStyle: 'default', icon: '' };
     setLinks(prev => [...prev, newLink]);
     setSelectedId(newId);
     setActiveTab('links');
@@ -541,6 +555,9 @@ export default function Editor() {
                 <option value="style-neumorphic">Neumorphic</option>
                 <option value="style-3d">3D Push</option>
                 <option value="style-minimal">Minimal</option>
+                <option value="style-gradient">Gradient</option>
+                <option value="style-retro">Retro</option>
+                <option value="style-glow-pulse">Glow Pulse</option>
               </select>
             </div>
 
@@ -557,6 +574,43 @@ export default function Editor() {
                 <option value="shape-arch">Arch</option>
                 <option value="shape-soft-arch">Soft Arch</option>
                 <option value="shape-blob">Organic Blob</option>
+                <option value="shape-ticket">Ticket</option>
+                <option value="shape-diamond">Diamond</option>
+                <option value="shape-wavy">Wavy</option>
+                <option value="shape-hexagonal">Hexagonal</option>
+              </select>
+            </div>
+
+            <div className="sidebar-header" style={{ marginTop: '24px' }}><h2>Animations & Fonts</h2></div>
+            <div className="input-group">
+              <label>Profile Font</label>
+              <select value={profileFont} onChange={(e) => setProfileFont(e.target.value)}>
+                <option value="'Inter', sans-serif">Inter</option>
+                <option value="'Caveat', cursive">Caveat</option>
+                <option value="'Archivo Black', sans-serif">Archivo Black</option>
+                <option value="'Playfair Display', serif">Playfair Display</option>
+                <option value="'Space Mono', monospace">Space Mono</option>
+              </select>
+            </div>
+            <div className="input-group">
+              <label>Background Animation</label>
+              <select value={animatedBg} onChange={(e) => setAnimatedBg(e.target.value)}>
+                <option value="none">None</option>
+                <option value="particles">Particles</option>
+                <option value="gradient-shift">Gradient Shift</option>
+                <option value="aurora">Aurora Waves</option>
+                <option value="rain">Digital Rain</option>
+                <option value="stars">Twinkling Stars</option>
+              </select>
+            </div>
+            <div className="input-group">
+              <label>Link Entrance Animation</label>
+              <select value={entranceAnim} onChange={(e) => setEntranceAnim(e.target.value)}>
+                <option value="none">None</option>
+                <option value="fade-up">Fade Up</option>
+                <option value="scale-in">Scale In</option>
+                <option value="slide-left">Slide Left</option>
+                <option value="blur-in">Blur In</option>
               </select>
             </div>
 
@@ -604,6 +658,9 @@ export default function Editor() {
           }}>
             <Copy size={16} /> Copy Share Link
           </button>
+          <button className="action-btn primary" style={{ marginTop: '12px' }} onClick={() => setShowQRModal(true)}>
+            QR Code
+          </button>
         </div>
       </div>
 
@@ -632,7 +689,7 @@ export default function Editor() {
             {/* Page Content */}
             <div className={`mockup-scroll ${profileLayout}`}>
               {/* Profile */}
-              <div className="mockup-profile">
+              <div className="mockup-profile" style={{ fontFamily: profileFont }}>
                 {profileLayout !== 'layout-minimal' && profile.avatar && <img src={profile.avatar} alt="" className="mockup-avatar" />}
                 {profileLayout !== 'layout-top-heavy' && <h2 className="mockup-name">{profile.name}</h2>}
                 {profileLayout !== 'layout-top-heavy' && <p className="mockup-username">{profile.username}</p>}
@@ -659,7 +716,7 @@ export default function Editor() {
                       href={link.url || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`mockup-link-card ${selectedId === link.id ? 'selected' : ''} ${btnStyle} ${btnShape} ${gSize} ${cStyle}`}
+                      className={`mockup-link-card ${selectedId === link.id ? 'selected' : ''} ${btnStyle} ${btnShape} ${gSize} ${cStyle} ${entranceAnim !== 'none' ? 'anim-' + entranceAnim : ''}`}
                       style={{
                         fontFamily: link.font || "'Inter', sans-serif",
                         color: link.color || undefined,
@@ -667,6 +724,7 @@ export default function Editor() {
                       }}
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedId(link.id); }}
                     >
+                      {link.icon && <span style={{ marginRight: '8px' }}>{link.icon}</span>}
                       {link.content}
                     </a>
                   );
@@ -686,6 +744,10 @@ export default function Editor() {
             <div className="input-group">
               <label>Title</label>
               <input type="text" value={selectedLink.content || ''} onChange={(e) => updateLink('content', e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>Icon Emoji</label>
+              <input type="text" maxLength={2} value={selectedLink.icon || ''} onChange={(e) => updateLink('icon', e.target.value)} />
             </div>
             <div className="input-group">
               <label>URL</label>
@@ -790,6 +852,12 @@ export default function Editor() {
             </div>
           </div>
         </div>
+      )}
+      {showQRModal && (
+        <QRModal 
+          url={`${window.location.origin}/${(profile.username || '').replace('@', '')}`}
+          onClose={() => setShowQRModal(false)}
+        />
       )}
     </div>
   );

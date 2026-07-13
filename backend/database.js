@@ -17,14 +17,17 @@ const userDataSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', unique: true },
   profile: { type: Object, default: {} },
   socials: { type: Object, default: {} },
-  theme: { type: String, default: 'default' },
+  theme: { type: String, default: 'aura' },
   profileLayout: { type: String, default: 'layout-classic' },
   btnStyle: { type: String, default: 'style-solid' },
   btnShape: { type: String, default: 'shape-rounded' },
   customColors: { type: Object, default: {} },
   links: { type: Array, default: [] },
   bgImage: { type: String, default: '' },
-  drawingBg: { type: String, default: '' }
+  drawingBg: { type: String, default: '' },
+  animatedBg: { type: String, default: 'none' },
+  entranceAnim: { type: String, default: 'fade-up' },
+  profileFont: { type: String, default: "'Inter', sans-serif" }
 });
 
 const User = mongoose.model('User', userSchema);

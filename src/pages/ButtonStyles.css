@@ -1,14 +1,15 @@
 /* ═══ BUTTON SHAPES ═══ */
-.shape-sharp { border-radius: 0px; }
-.shape-rounded-sm { border-radius: 4px; }
 .shape-rounded { border-radius: 8px; }
 .shape-rounded-lg { border-radius: 16px; }
 .shape-pill { border-radius: 9999px; }
 .shape-leaf { border-radius: 20px 0 20px 0; }
 .shape-reverse-leaf { border-radius: 0 20px 0 20px; }
 .shape-arch { border-radius: 24px 24px 0 0; }
-.shape-soft-arch { border-radius: 12px 12px 0 0; }
 .shape-blob { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+.shape-ticket { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); border-radius: 0; }
+.shape-diamond { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%); border-radius: 0; }
+.shape-wavy { border-radius: 10px 30px 10px 30px; }
+.shape-hexagonal { clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0% 50%); border-radius: 0; }
 
 /* ═══ BUTTON STYLES ═══ */
 .style-solid {
@@ -62,12 +63,34 @@
   border-bottom-width: 0px;
   transform: translateY(4px);
 }
-.style-minimal {
+.style-gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: var(--bg-primary);
+  border: none;
+  box-shadow: 0 4px 15px var(--accent-soft);
+}
+.style-retro {
+  background-color: var(--bg-secondary);
+  border: 3px solid var(--text-primary);
+  border-radius: 0;
+  box-shadow: 5px 5px 0 var(--accent);
+  color: var(--text-primary);
+  font-weight: bold;
+}
+.style-retro:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--accent);
+}
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 5px var(--accent); }
+  50% { box-shadow: 0 0 20px var(--accent-hover); }
+  100% { box-shadow: 0 0 5px var(--accent); }
+}
+.style-glow-pulse {
   background-color: transparent;
-  border-color: transparent;
-  box-shadow: none;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  animation: glowPulse 2s infinite;
 }
 
 /* ═══ BENTO GRID SIZES ═══ */

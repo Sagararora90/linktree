@@ -65,25 +65,26 @@ function verifyToken(req, res, next) {
   });
 }
 
+// All data fields we store and return
+const DATA_FIELDS = [
+  'profile', 'socials', 'theme', 'btnStyle', 'btnShape', 'customColors',
+  'links', 'bgImage', 'drawingBg', 'profileLayout', 'animatedBg',
+  'entranceAnim', 'profileFont'
+];
+
+function pickDataFields(data) {
+  const result = {};
+  DATA_FIELDS.forEach(f => { if (data[f] !== undefined) result[f] = data[f]; });
+  return result;
+}
+
 // --- USER DATA ROUTES ---
 
 app.get('/api/user/data', verifyToken, async (req, res) => {
   try {
     const data = await UserData.findOne({ user_id: req.userId });
     if (!data) return res.json({});
-    
-    res.json({
-      profile: data.profile,
-      socials: data.socials,
-      theme: data.theme,
-      btnStyle: data.btnStyle,
-      btnShape: data.btnShape,
-      customColors: data.customColors,
-      links: data.links,
-      bgImage: data.bgImage,
-      drawingBg: data.drawingBg,
-      profileLayout: data.profileLayout
-    });
+    res.json(pickDataFields(data));
   } catch (err) {
     res.status(500).json({ message: 'Error fetching data' });
   }
@@ -91,15 +92,15 @@ app.get('/api/user/data', verifyToken, async (req, res) => {
 
 app.post('/api/user/data', verifyToken, async (req, res) => {
   try {
-    const { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout } = req.body;
-    
+    const updatePayload = pickDataFields(req.body);
+
     // Check if user wants to change their URL slug
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
     let activeUsername = user.username;
 
-    if (profile && profile.username) {
-      const requestedSlug = profile.username.replace(/^@/, '').trim().toLowerCase();
+    if (updatePayload.profile && updatePayload.profile.username) {
+      const requestedSlug = updatePayload.profile.username.replace(/^@/, '').trim().toLowerCase();
       if (requestedSlug && requestedSlug !== activeUsername) {
         const existing = await User.findOne({ username: requestedSlug });
         if (!existing) {
@@ -112,7 +113,7 @@ app.post('/api/user/data', verifyToken, async (req, res) => {
 
     await UserData.findOneAndUpdate(
       { user_id: req.userId },
-      { profile, socials, theme, btnStyle, btnShape, customColors, links, bgImage, drawingBg, profileLayout },
+      updatePayload,
       { upsert: true, new: true }
     );
 
@@ -131,16 +132,14 @@ app.get('/api/public/:username', async (req, res) => {
 
     // Send Analytics to Discord
     const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'Unknown';
-    const ip = rawIp.split(',')[0].trim(); // x-forwarded-for can have multiple IPs
+    const ip = rawIp.split(',')[0].trim();
     const userAgent = req.headers['user-agent'] || 'Unknown';
     const referer = req.headers['referer'] || 'Direct Link';
 
-    // We do this asynchronously so it doesn't slow down the page load for the visitor!
     (async () => {
       let locationStr = 'Unknown Location';
       let ispStr = 'Unknown ISP';
       
-      // Get Location from IP
       if (ip && ip !== 'Unknown' && ip !== '::1' && ip !== '127.0.0.1') {
         try {
           const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,isp`);
@@ -152,7 +151,6 @@ app.get('/api/public/:username', async (req, res) => {
         } catch (e) { /* ignore */ }
       }
 
-      // Format Source Beautifully
       let source = referer;
       if (referer.includes('instagram.com')) source = '📱 Instagram';
       else if (referer.includes('tiktok.com')) source = '🎵 TikTok';
@@ -160,7 +158,6 @@ app.get('/api/public/:username', async (req, res) => {
       else if (referer.includes('youtube.com')) source = '📺 YouTube';
       else if (referer === 'Direct Link') source = '🔗 Direct Link (Typed URL or Text Message)';
 
-      // Extract Device briefly from UserAgent
       let device = 'Computer / Unknown';
       if (userAgent.includes('iPhone')) device = '📱 iPhone';
       else if (userAgent.includes('Android')) device = '📱 Android Phone';
@@ -194,19 +191,7 @@ app.get('/api/public/:username', async (req, res) => {
 
     const data = await UserData.findOne({ user_id: user._id });
     if (!data) return res.json({});
-    
-    res.json({
-      profile: data.profile,
-      socials: data.socials,
-      theme: data.theme,
-      btnStyle: data.btnStyle,
-      btnShape: data.btnShape,
-      customColors: data.customColors,
-      links: data.links,
-      bgImage: data.bgImage,
-      drawingBg: data.drawingBg,
-      profileLayout: data.profileLayout
-    });
+    res.json(pickDataFields(data));
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

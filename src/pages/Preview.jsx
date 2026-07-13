@@ -21,6 +21,9 @@ export default function Preview() {
     bgPrimary: '#1a1a1a', bgSecondary: '#222222', bgElevated: '#333333',
     textPrimary: '#ffffff', textSecondary: '#aaaaaa', accent: '#3b82f6'
   });
+  const [animatedBg, setAnimatedBg] = useState('none');
+  const [entranceAnim, setEntranceAnim] = useState('fade-up');
+  const [profileFont, setProfileFont] = useState("'Inter', sans-serif");
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [socials, setSocials] = useState(DEFAULT_SOCIALS);
 
@@ -67,6 +70,9 @@ export default function Preview() {
         if (data.customColors) setCustomColors(data.customColors);
         if (data.bgImage) setBgImage(data.bgImage);
         if (data.drawingBg) setDrawingBg(data.drawingBg);
+        if (data.animatedBg) setAnimatedBg(data.animatedBg);
+        if (data.entranceAnim) setEntranceAnim(data.entranceAnim);
+        if (data.profileFont) setProfileFont(data.profileFont);
         setLoading(false);
       })
       .catch(err => {
@@ -98,6 +104,9 @@ export default function Preview() {
         `}} />
       )}
 
+      {/* Animated Background */}
+      {animatedBg !== 'none' && <div className={`preview-bg bg-anim-${animatedBg}`} />}
+
       {/* Background Image */}
       {bgImage && <div className="preview-bg" style={{ backgroundImage: `url(${bgImage})` }} />}
 
@@ -122,7 +131,7 @@ export default function Preview() {
         </button>
 
         {/* Profile */}
-        <div className="preview-profile">
+        <div className="preview-profile" style={{ fontFamily: profileFont }}>
           {profileLayout !== 'layout-minimal' && (
             profile.avatar ? (
               <img src={profile.avatar} alt="" className="preview-avatar" />
@@ -158,14 +167,14 @@ export default function Preview() {
                 href={link.url || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`preview-link-card ${btnStyle} ${btnShape} ${gSize} ${cStyle}`}
+                className={`preview-link-card ${btnStyle} ${btnShape} ${gSize} ${cStyle} ${entranceAnim !== 'none' ? 'anim-' + entranceAnim : ''}`}
                 style={{
                   fontFamily: link.font || "'Inter', sans-serif",
                   color: link.color || undefined,
                   backgroundColor: link.bgColor || undefined,
                 }}
               >
-                <span>{link.content}</span>
+                <span>{link.icon && <span style={{ marginRight: '8px' }}>{link.icon}</span>}{link.content}</span>
                 <button 
                   className="link-share-btn" 
                   onClick={(e) => {
